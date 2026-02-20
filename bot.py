@@ -28,13 +28,21 @@ def descargar_musica(message):
     msg = bot.reply_to(message, "⏳ Bajando audio... esto tarda un poquito.")
 
     ydl_opts = {
+         ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': 'cancion.%(ext)s',
+        # Este es el truco: usamos una fuente alternativa para evitar el bloqueo
+        'force_generic_extractor': False,
+        'nocheckcertificate': True,
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
+        # Agregamos una identidad falsa para que YouTube no sospeche
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    }
+    
     }
 
     try:
