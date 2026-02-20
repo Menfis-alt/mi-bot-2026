@@ -4,7 +4,7 @@ from threading import Thread
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # TOKEN de Menfis
-TOKEN = '8264125848:AAH_mTy7R82mR8TwuqcPkbyUEXx6C7zhksE'
+TOKEN = '8264125848:AAH_mIyzRB2nR8IwpqePWbyUEFxi6CZhRsE'
 bot = telebot.TeleBot(TOKEN)
 app = Flask('')
 
