@@ -1,4 +1,3 @@
-import os
 import telebot
 from flask import Flask
 from threading import Thread
@@ -11,14 +10,14 @@ app = Flask('')
 
 @app.route('/')
 def home():
-    return "Bot de Menfis funcionando con Plan B"
+    return "Bot de Menfis: Plan B Activado"
 
 def run():
     app.run(host='0.0.0.0', port=8080)
 
-# --- FUNCIÓN DE MÚSICA (PLAN B: SIN BLOQUEOS) ---
+# --- FUNCIÓN DE MÚSICA (ESTA NO FALLA) ---
 @bot.message_handler(commands=['musica', 'música'])
-def enviar_link_descarga(message):
+def enviar_boton_descarga(message):
     partes = message.text.split(' ', 1)
     if len(partes) < 2:
         bot.reply_to(message, "⚠️ Envía el link así: /musica [link de youtube]")
@@ -26,17 +25,17 @@ def enviar_link_descarga(message):
 
     link_original = partes[1]
     
-    # Creamos un botón elegante para descargar fuera de YouTube
+    # Creamos el botón de descarga externa
     markup = InlineKeyboardMarkup()
-    # Usamos Dirpy que es excelente para bajar MP3 rápido
-    link_directo = f"https://dirpy.com/from/{link_original}"
+    # Usamos un servicio confiable para la conversión
+    url_descarga = f"https://dirpy.com/from/{link_original}"
     
-    btn = InlineKeyboardButton("⬇️ CLIC AQUÍ PARA DESCARGAR MP3", url=link_directo)
-    markup.add(btn)
+    boton = InlineKeyboardButton("⬇️ DESCARGAR MP3 AQUÍ", url=url_descarga)
+    markup.add(boton)
 
     bot.send_message(
         message.chat.id, 
-        "✅ ¡Listo! Para evitar el bloqueo de YouTube, usa este convertidor rápido y seguro:", 
+        "✅ ¡Enlace listo! Para evitar el bloqueo de YouTube, toca el botón de abajo para bajar tu música:", 
         reply_markup=markup
     )
 
