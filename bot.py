@@ -1,64 +1,27 @@
-import os
-import telebot
-import yt_dlp
-from flask import Flask
-from threading import Thread
-
-# 1. Tu Token real aquí
-TOKEN = '8264125848:AAH_mIyzRB2nR8IwpqePWbyUEFxi6CZhRsE'
-bot = telebot.TeleBot(TOKEN)
-app = Flask('')
-
-@app.route('/')
-def home():
-    return "Bot de Menfis funcionando"
-
-def run():
-    app.run(host='0.0.0.0', port=8080)
-
-# 2. Función para descargar música
-@bot.message_handler(commands=['musica'])
+# --- NUEVA FUNCIÓN DE MÚSICA (SIN BLOQUEOS) ---
+@bot.message_handler(commands=['musica', 'música'])
 def descargar_musica(message):
     partes = message.text.split(' ', 1)
     if len(partes) < 2:
         bot.reply_to(message, "⚠️ Envía el link así: /musica [link de youtube]")
         return
 
-    link = partes[1]
-    msg = bot.reply_to(message, "⏳ Bajando audio... esto tarda un poquito.")
-
-        # Configuración de descarga
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'outtmpl': 'cancion.%(ext)s',
-        'force_generic_extractor': False,
-        'nocheckcertificate': True,
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    }
+    link_original = partes[1]
     
+    # Creamos un botón elegante
+    from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+    markup = InlineKeyboardMarkup()
     
-    }
+    # Este link usa un servicio que salta todos los bloqueos de YouTube
+    link_directo = f"https://cobalt.tools/api/json" 
+    # Para no complicarte con APIs, usaremos un link de descarga directa web:
+    descarga_web = f"https://dirpy.com/from/{link_original}"
 
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([link])
-        
-        with open('cancion.mp3', 'rb') as audio:
-            bot.send_audio(message.chat.id, audio)
-        
-        os.remove('cancion.mp3') # Limpia la RAM de Render
-        bot.delete_message(message.chat.id, msg.message_id)
-    except Exception as e:
-        bot.reply_to(message, f"❌ Error: {str(e)}")
+    btn = InlineKeyboardButton("⬇️ CLIC AQUÍ PARA DESCARGAR MP3", url=descarga_web)
+    markup.add(btn)
 
-# 3. Encender el bot
-if __name__ == "__main__":
-    t = Thread(target=run)
-    t.start()
-    bot.polling()
+    bot.reply_to(message, 
+                 "✅ ¡Listo! YouTube no me deja enviarte el archivo directo, pero aquí tienes tu link de descarga rápida sin anuncios:", 
+                 reply_markup=markup)
+    
     
