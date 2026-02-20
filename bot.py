@@ -1,44 +1,66 @@
 import os
+import telebot
+import yt_dlp
 from flask import Flask
 from threading import Thread
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# --- EL PARCHE PARA QUE NO SE DUERMA ---
-# Esto crea una página web falsa para que Render crea que el bot es un sitio web.
+# 1. CONFIGURACIÓN - Pon tu Token de BotFather aquí
+TOKEN = '8264125848:AAH_mIyzRB2nR8IwpqePWbyUEFxi6CZhRsE'
+bot = telebot.TeleBot(TOKEN)
+
+# 2. EL PARCHE PARA QUE RENDER NO SE DUERMA
 app_web = Flask('')
-
 @app_web.route('/')
 def home():
     return "¡El bot está encendido y trabajando!"
 
 def run():
-    # Render usa el puerto 8080 por defecto en muchos casos
     app_web.run(host='0.0.0.0', port=8080)
 
 def keep_alive():
     t = Thread(target=run)
     t.start()
 
-# --- FUNCIONES DEL BOT ---
+# 3. FUNCIÓN PARA DESCARGAR MÚSICA
+@bot.message_handler(commands=['musica'])
+def descargar_musica(message):
+    partes = message.text.split(' ', 1)
+    if len(partes) < 2:
+        bot.reply_to(message, "⚠️ Envía el link así: /musica https://www.youtube.com/...")
+        return
 
-async def inicio(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("¡Qué onda! Estoy funcionando desde la nube. ☁️")
+    link = partes[1]
+    msg = bot.reply_to(message, "⏳ Procesando audio... esto tarda un poquito.")
 
-async def eco(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(f"Recibí: {update.message.text}")
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': 'cancion.%(ext)s',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+    }
 
-# --- ARRANQUE ---
-if __name__ == '__main__':
-    # 1. Activamos el servidor web primero
-    keep_alive()
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([link])
+        
+        with open('cancion.mp3', 'rb') as audio:
+            bot.send_audio(message.chat.id, audio)
+        
+        # Limpiamos la memoria de 512MB
+        if os.path.exists('cancion.mp3'):
+            os.remove('cancion.mp3')
+            
+        bot.delete_message(message.chat.id, msg.message_id)
+        
+    except Exception as e:
+        bot.edit_message_text(f"❌ Error: {str(e)}", message.chat.id, msg.message_id)
+
+# 4. INICIO DEL BOT
+if __name__ == "__main__":
+    keep_alive() # Inicia la web de Flask
+    print("Bot encendido correctamente")
+    bot.polling()
     
-    # 2. Configuramos el bot de Telegram
-    TOKEN = "8264125848:AAH_mIyzRB2nR8IwpqePWbyUEFxi6CZhRsE"
-    
-    app = Application.builder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", inicio))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, eco))
-    
-    print("El bot y el servidor web están arrancando...")
-    app.run_polling()
